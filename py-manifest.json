@@ -1,0 +1,16 @@
+[
+  "py/api_facade.py",
+  "py/core/__init__.py",
+  "py/core/actuary.py",
+  "py/core/agents.py",
+  "py/core/compliance.py",
+  "py/core/harness.py",
+  "py/core/llm.py",
+  "py/core/rag.py",
+  "py/core/trace.py",
+  "py/core/voice.py",
+  "py/data/cases.json",
+  "py/data/corpus.json",
+  "py/data/products.json",
+  "py/data/profiles.json"
+]

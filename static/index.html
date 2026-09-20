@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AntInsure AI · 蚂蚁保平台 AI 销售系统</title>
+<link rel="stylesheet" href="./static/style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
+      <rect x="1" y="1" width="30" height="30" rx="9" fill="none" stroke="#4c8dff" stroke-width="1.6"/>
+      <path d="M9 21.5 16 9.5l7 12" fill="none" stroke="#4c8dff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M12.2 18.4h7.6" stroke="#a371f7" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <h1>AntInsure AI</h1>
+      <p class="sub">蚂蚁保平台 AI 销售系统 · 五层 Multi-Agent 可运行 Demo</p>
+    </div>
+  </div>
+
+  <div class="positioning">
+    <span class="pill">AI 销售系统（主动引导转化）</span>
+    <span class="pill ghost">不是 AI 客服（被动应答）</span>
+    <span class="pill ghost">LLM 只理解 + 只调工具，不算数、不决策</span>
+  </div>
+
+  <div class="controls">
+    <div class="ctrl-group">
+      <label>Prompt 版本</label>
+      <div class="seg" id="promptSeg">
+        <button data-v="v3.0" class="active">v3.0 生产版</button>
+        <button data-v="v1.0">v1.0 对照版</button>
+        <button data-v="auto">灰度 A/B</button>
+      </div>
+    </div>
+    <div class="ctrl-group">
+      <label>模型层</label>
+      <div class="models" id="modelBadges"></div>
+    </div>
+  </div>
+</header>
+
+<main class="layout">
+
+  <!-- ================= 左栏 ================= -->
+  <aside class="col-left">
+    <section class="card">
+      <h2 class="card-title">① 用户层 · 画像选择</h2>
+      <p class="card-hint">Planner 会按画像实时分型（了解型 / 比价型 / 犹豫型），旅程与情绪曲线决定介入优先级</p>
+      <div class="user-list" id="userList"></div>
+      <div class="profile-detail" id="profileDetail"></div>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">② 关键触发事件 · 不打扰原则</h2>
+      <p class="card-hint">只在行为触发点主动开口，不群发、不打扰</p>
+      <div class="trigger-list" id="triggerList"></div>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">③ 合规闸压测 · 对抗样本</h2>
+      <p class="card-hint">把一句"模型可能生成的违规话术"直接送进 4 道闸，验证拦截能力</p>
+      <div class="adversarial" id="adversarialList"></div>
+      <div class="adversarial-input">
+        <textarea id="advText" rows="2" placeholder="自定义违规话术，例如：这款年金险稳赚不赔，比银行存款划算。"></textarea>
+        <button class="btn primary" id="advBtn">送入 4 道闸</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">④ 数据层 · Prompt 回归集</h2>
+      <p class="card-hint">改 Prompt 自动跑回归，任一不过即拦截上线</p>
+      <button class="btn" id="regressionBtn">运行 500+ Badcase 回归</button>
+      <div id="regressionResult" class="regression"></div>
+    </section>
+  </aside>
+
+  <!-- ================= 中栏 ================= -->
+  <section class="col-mid">
+    <div class="card chat-card">
+      <div class="chat-head">
+        <div class="chat-title">
+          <span class="ai-tag">AI 助手</span>
+          <span id="sessionLabel">未建立会话</span>
+        </div>
+        <div class="chat-meta" id="chatMeta"></div>
+      </div>
+      <div class="chat-body" id="chatBody">
+        <div class="empty-state" id="chatEmpty">
+          <strong>选择一位用户，再点一个行为触发点</strong>
+          <span>系统会走完 感知 → 决策 → 调度 → 执行 → 复盘 五层链路，并在右侧实时展示每一步决策与合规校验</span>
+        </div>
+      </div>
+      <div class="chat-input">
+        <textarea id="msgInput" rows="1" placeholder="也可以直接模拟用户说话，例如：这个健康告知我不知道怎么填"></textarea>
+        <button class="btn primary" id="sendBtn">发送</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 右栏 ================= -->
+  <aside class="col-right">
+    <div class="tabs" id="tabs">
+      <button data-tab="pipeline" class="active">五层流水线</button>
+      <button data-tab="trace">Trace / 重放</button>
+      <button data-tab="metrics">指标看板</button>
+      <button data-tab="reflect">复盘层</button>
+    </div>
+
+    <div class="tab-panel active" data-panel="pipeline">
+      <div class="plan-banner" id="planBanner">
+        <span class="muted">等待 Planner 决策…</span>
+      </div>
+      <div class="pipeline" id="pipeline"></div>
+      <div class="gates" id="gates">
+        <div class="gates-head">4 道合规闸</div>
+        <div class="gate-list" id="gateList">
+          <span class="muted">尚未执行</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" data-panel="trace">
+      <div class="trace-head">
+        <div>
+          <div class="trace-id" id="traceIdLabel">—</div>
+          <div class="trace-sub" id="traceSub">每一次决策全量落库，Trace ID 贯穿召回→重排→推荐→Prompt→LLM→4 道闸</div>
+        </div>
+        <button class="btn small" id="replayBtn" disabled>一键重放 (L3)</button>
+      </div>
+      <div class="trace-steps" id="traceSteps"><span class="muted">暂无 Trace</span></div>
+      <div class="trace-list-head">历史 Trace</div>
+      <div class="trace-list" id="traceList"></div>
+    </div>
+
+    <div class="tab-panel" data-panel="metrics">
+      <div class="metrics" id="metrics"></div>
+      <div class="alerts">
+        <div class="alerts-head">L4 主动预警</div>
+        <div id="alertList"><span class="muted">暂无预警</span></div>
+      </div>
+    </div>
+
+    <div class="tab-panel" data-panel="reflect">
+      <div class="reflect" id="reflect"><span class="muted">完成一次会话后展示复盘结果</span></div>
+      <div class="badcase-lib">
+        <div class="sub-head">历史 Badcase 库（节选）</div>
+        <div id="badcaseLib"></div>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<!-- bridge 必须先于 app.js：它要同步挂载 window.ANTINSURE_RUNTIME -->
+<script src="./static/bridge.js"></script>
+<script src="./static/app.js"></script>
+</body>
+</html>

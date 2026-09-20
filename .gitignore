@@ -1,0 +1,6 @@
+# 运行时产物：本地/浏览器内跑门面时会生成，不该进仓库
+py/data/trace_store.json
+
+.DS_Store
+*.bak
+*.log
