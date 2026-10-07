@@ -1,3 +1,80 @@
+# AntInsure AI · 主动销售 Agent
+
+把感知、决策、调度、执行与复盘做成可观察的五层流程。
+
+**作品形态：可运行规则与离线合成 Demo**
+
+[在线体验](https://cain0624.github.io/antinsure-ai/) · [个人作品集](https://kunyu-builds.s291623933.chatgpt.site/projects/antinsure-ai.html)
+
+> 项目案例依据当前公开代码、页面、README 与提交记录整理。已实现、历史验证记录和下一步计划分别标明；模拟数据不作为真实业务结果。
+
+## 背景
+
+主动销售需要判断何时开口、问什么和调用什么工具。只有一段最终回复，难以说明销售决策、风险处理和质量治理是否成立。
+
+这个作品基于 AI 销售方案，把多层执行过程与合规闸门显性化，用来验证可观察、可回放的工作流。
+
+
+
+## 问题
+
+
+
+- 无触发的主动消息可能打扰用户；过早推荐会忽略客户情绪和需求阶段。
+- 模型直接计算费率或判断核保会放大事实错误，生成表达和业务规则需要分工。
+- 风险句被上游改写后，后续检查可能失去原始风险；只看最后输出难以定位原因。
+
+## 思考
+
+
+
+- 按 Observe、Plan、Harness、Act、Reflect 分层，让场景触发优先于用户分型，决策与话术执行分开。
+- 将工具权限、Prompt 版本、上下文与风险短路交给调度层，计算和产品事实来自确定性工具与演示资料。
+- 保留原始输入、逐层 Trace 与处置结果，以便区分规划、检索、生成和流程问题。
+
+## 动作
+
+
+
+- 建立三类画像、六类行为触发、六个 Executor 和四道风险检查，演示 PASS、SANITIZE、BLOCK 与转人工。
+- 增加话术长度预算、情绪价值、Prompt 版本对照、Trace 展开、重放及回归入口。
+- 使用 Pyodide 在浏览器执行同一套 Python 业务逻辑，通过桥接复用前端与本地服务接口。
+
+## 优化
+
+
+
+- 代码中将原始检测文本与累积改写文本分开，避免删改造成后续漏检；增加话术长度与情绪约束。
+- 当前 G2 是基于分词、证据重合和否定冲突的规则近似，并非已接入独立 NLI 模型；默认回复来自离线合成器。
+- 下一步：对真实会话建立独立评测，验证规则漏检、拒答、转人工与版本差异，再考虑真实模型和生产灰度。
+
+## 结果
+
+浏览器可以运行完整分层链路，并显示本轮决策、工具、风险闸与 Trace。可观察性和规则执行可以直接检验。
+
+产品、费率、画像、路由比例和指标均为演示设定；页面的回归数量或成本显示不能作为真实生产评测与商业收益。
+
+- 建议衡量：触达适时性、事实一致性、严重风险漏检率、转人工召回率、任务完成率、P95 时延与单次有效会话成本。
+- 验收路径：选画像 → 触发事件 → 展开五层 Trace → 输入风险句 → 对照 Prompt 版本或回放。
+
+## 实现证据与关联作品
+
+| 内容 | 文件 |
+| --- | --- |
+| 调度与执行边界 | [py/core/harness.py](https://github.com/cain0624/antinsure-ai/blob/main/py/core/harness.py) |
+| 四道检查的实际实现 | [py/core/compliance.py](https://github.com/cain0624/antinsure-ai/blob/main/py/core/compliance.py) |
+| 离线与模型模式 | [py/core/llm.py](https://github.com/cain0624/antinsure-ai/blob/main/py/core/llm.py) |
+| Trace 与复盘 | [py/core/trace.py](https://github.com/cain0624/antinsure-ai/blob/main/py/core/trace.py) |
+
+- [SDR 智能工作台](https://github.com/cain0624/sdr-workbench)
+- [千川内容平台](https://github.com/cain0624/qianchuan-content-platform)
+- [AI 知识地图 · Agent 与 RAG](https://github.com/cain0624/ai-explainer)
+
+---
+
+<details>
+<summary>技术使用与原有说明（展开查看；能力边界以以上案例为准）</summary>
+
 # AntInsure AI · 蚂蚁保平台 AI 销售系统（五层 Multi-Agent）
 
 在线演示（纯静态托管，打开即用）：**https://cain0624.github.io/antinsure-ai/**
@@ -49,7 +126,7 @@ Python 代码原样搬进仓库，由浏览器内的 CPython（Pyodide）执行�
 | 闸 | 职责 | 处置 |
 |---|---|---|
 | **G1 规则引擎** | 数字一致性（金额只来自精算 API）+ 必带提示 | PASS / SANITIZE |
-| **G2 NLI 蕴含** | 逐句校验是否被条款原文蕴含（情绪句豁免） | 摘除无依据句 |
+| **G2 证据一致性（规则近似）** | 逐句校验是否被条款原文蕴含（情绪句豁免） | 摘除无依据句 |
 | **G3 关键词审查** | 监管敏感词、绝对化用语 | 摘除 |
 | **G4 风险话术** | 弱化如实告知 / 诱导退保 / 收益承诺 | 高风险整条 **BLOCK → 转人工** |
 
@@ -111,3 +188,5 @@ cd ../antinsure-live && git add -A && git commit -m "update" && git push
 
 本项目为**技术方案演示**，产品、费率、核保结论均为演示数据，
 不构成任何投保建议或保险销售行为。
+
+</details>
