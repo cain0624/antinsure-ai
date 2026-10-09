@@ -23,5 +23,7 @@ r=call('/api/chat',{'session_id':s,'user_id':'u_1002','message':'保证收益，
 r=call('/api/chat',{'session_id':s,'user_id':'u_1002','message':'太空飞船动力如何设计'});assert not r['recommendation'] and not r['sources']
 assert run_gates('不能保证收益。',['不能保证收益。'],requires_evidence=False)['blocked'] is False
 assert run_gates('产品无风险。',[],requires_evidence=True)['blocked']
+s=session('u_1001');r=call('/api/chat',{'session_id':s,'user_id':'u_1001','message':'我的钱明天要用，想比较基金'});assert not r['recommendation'];r=event(s,'u_1001','browse_funds');assert not r['recommendation']
+s=session('u_1001');r=call('/api/chat',{'session_id':s,'user_id':'u_1001','message':'3个月后要用钱，比较基金费用'});assert all(p['id']=='F-MONEY' for p in r['recommendation']['items'])
 r=call('/api/regression');assert r['total']==100 and r['passed']==100
 print('Fund checks passed: matching, missing assessment, confirmation dedup, optout, evidence expiry, traces, unknown queries, risk blocks and 100 executed regressions.')

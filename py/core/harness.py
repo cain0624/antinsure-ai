@@ -104,6 +104,6 @@ class Orchestrator:
         return {'trace_id':r.trace_id,'events':r.steps,'trace':trace,'session':{'state':s.state,'turn':s.turn},'llm':{'model':'规则话术合成（演示）','route':'deterministic','mode':'offline'},'prompt':{'used':s.prompt_version},'final_text':text,'voice':{'empathy_kind':'先解释再决策','budget':max(220,len(text)),'used':len(text)},'handoff':handoff,'gate_summary':gate['summary'],'risk_score':r.risk_score,'recommendation':rec,'suitability':match,'metrics':self.store.metrics(),'reflect':self.store.reflect(s.session_id),'sources':rag['hits']}
     def trigger(self,s,key):
         if key not in TRIGGER_MESSAGES:raise ValueError('未知行为事件')
-        if key=='assessment_complete':s.memory['profile_updates']={'assessment_valid':True,'risk_level':2}
+        if key=='assessment_complete':s.memory.setdefault('profile_updates',{}).update({'assessment_valid':True,'risk_level':2})
         return self.run_turn(s,TRIGGER_MESSAGES[key],[key])
     def adversarial(self,s,text):return run_gates(text,[],requires_evidence=False)

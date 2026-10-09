@@ -1,12 +1,24 @@
 """六个有限职责执行器：画像、证据、适当性、比较、话术、人工。"""
+import re
 from .finance import suitability,fee_quote
 from . import voice
 class ObserveLayer:
     def observe(self,profile,memory,message,behavior):
-        return {'profile':dict(profile),'behaviors':behavior,'memory':memory,'message':message,'emotion':{'label':'担忧' if any(w in message for w in ['跌','亏','担心']) else '中性','score':.5}}
+        profile=dict(profile)
+        term=None
+        if '明天' in message or '马上要用' in message:term=0
+        elif '下周' in message or '一周' in message:term=0.25
+        elif '半年' in message:term=6
+        else:
+            m=re.search(r'(\d+)\s*(天|个月|月|年)(?:后|内|就|要|用)',message)
+            if m:term=int(m[1])*{'天':1/30,'个月':1,'月':1,'年':12}[m[2]]
+        if term is not None:
+            profile['horizon_months']=min(profile.get('horizon_months',term),term)
+            memory.setdefault('profile_updates',{})['horizon_months']=profile['horizon_months']
+        return {'profile':profile,'behaviors':behavior,'memory':memory,'message':message,'emotion':{'label':'担忧' if any(w in message for w in ['跌','亏','担心']) else '中性','score':.5}}
 class Planner:
     def plan(self,obs,message,state,turn):
-        intents=[('pause',['不打扰','停止提醒','别联系']),('risk',['保证','稳赚','借钱','贷款','跳过测评','代填','投诉']),('redeem',['赎回','到账']),('drawdown',['净值回落','跌','亏']),('assess',['测评','风险等级']),('confirm',['模拟申购确认']),('compare',['对比','比较','浏览']),('fees',['费用','费率','手续费']),('sip',['定投','扣款'])]
+        intents=[('pause',['不打扰','停止提醒','别联系']),('risk',['保证','稳赚','借钱','贷款','信用卡','杠杆','跳过测评','代填','投诉']),('redeem',['赎回','到账']),('drawdown',['净值回落','跌','亏']),('assess',['测评','风险等级']),('confirm',['模拟申购确认']),('compare',['对比','比较','浏览']),('fees',['费用','费率','手续费']),('sip',['定投','扣款'])]
         intent=next((k for k,ws in intents if any(w in message for w in ws)),'qa')
         return {'scene':obs['behaviors'][0] if obs['behaviors'] else '主动咨询','user_type':obs['profile']['typing_hint'],'intent':intent,
                 'strategy':{'pause':'停止触达','drawdown':'情绪承接与持有解释','assess':'先完成适当性','risk':'人工复核'}.get(intent,'事实解释，匹配后比较'),
