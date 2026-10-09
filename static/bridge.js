@@ -1,4 +1,4 @@
-/* ================= AntInsure AI · 浏览器端运行时桥 =================
+/* ================= AntFund AI · 浏览器端运行时桥 =================
  *
  * 作用：让同一份前端（app.js）既能在本地跑真 FastAPI 后端，也能在
  * GitHub Pages 这种「只能托管静态文件」的环境里独立运行。
@@ -7,10 +7,10 @@
  * 把 core/ 那套 Python 五层逻辑跑起来，直接把 /api/* 映射到 Python 函数。
  *
  * 对外契约（app.js 只依赖这两件事）：
- *   window.ANTINSURE_RUNTIME.ready  → Promise<'http' | 'bridge'>
- *   window.ANTINSURE_RUNTIME.call(path, body, method) → Promise<data>
+ *   window.ANTFUND_RUNTIME.ready  → Promise<'http' | 'bridge'>
+ *   window.ANTFUND_RUNTIME.call(path, body, method) → Promise<data>
  *
- * 必须同步挂载 window.ANTINSURE_RUNTIME：app.js 是普通 script，
+ * 必须同步挂载 window.ANTFUND_RUNTIME：app.js 是普通 script，
  * 解析到就会立即 init()，晚一步挂载就会掉进 http 分支拿 404。
  */
 (function () {
@@ -63,7 +63,7 @@
     overlay.id = 'bootOverlay';
     overlay.innerHTML =
       '<div class="boot-card">' +
-      '<div class="boot-title">AntInsure AI <span>五层 Multi-Agent</span></div>' +
+      '<div class="boot-title">AntFund AI <span>五层 Multi-Agent</span></div>' +
       '<div class="boot-msg" id="bootMsg">检测运行环境…</div>' +
       '<div class="boot-bar"><i id="bootBar"></i></div>' +
       '<div class="boot-hint" id="bootHint">纯静态部署：Python 运行时在浏览器内启动，首次约需数秒</div>' +
@@ -93,7 +93,7 @@
       '<div class="boot-msg">' + msg + '</div>' +
       (detail ? '<pre class="boot-detail">' + String(detail).slice(0, 600) + '</pre>' : '') +
       '<div class="boot-hint">本页是纯静态版本，Python 运行时需要从 CDN 下载。<br>' +
-      '若网络受限，可在本地启动后端后访问：<code>cd antinsure-ai &amp;&amp; ./run.sh</code></div>' +
+      '若网络受限，可在本地启动后端后访问：<code>python3 -m http.server 8895</code></div>' +
       '</div>';
   }
 
@@ -150,7 +150,7 @@
     setProgress(55, '装载 Multi-Agent 引擎…');
 
     // 文件清单由 deploy.sh 生成，避免文件增删后两边漂移
-    var manifestRes = await fetch('./py-manifest.json', { cache: 'no-store' });
+    var manifestRes = await fetch('./py-manifest.json?v=antfund-1', { cache: 'no-store' });
     if (!manifestRes.ok) throw new Error('缺少 py-manifest.json（请用 deploy.sh 生成发布目录）');
     var manifest = await manifestRes.json();
 
@@ -159,8 +159,8 @@
     var loaded = 0;
     for (var j = 0; j < manifest.length; j++) {
       var rel = manifest[j];                       // 形如 "py/core/agents.py"
-      var url = './' + rel;
-      var r = await fetch(url, { cache: 'force-cache' });
+      var url = './' + rel + '?v=antfund-1';
+      var r = await fetch(url, { cache: 'no-store' });
       if (!r.ok) throw new Error('取不到 ' + url + '（' + r.status + '）');
       var text = await r.text();
       var abs = '/app/' + rel;
@@ -220,14 +220,14 @@
     },
   };
   // 同步挂载：app.js 解析后立刻会调用 api()
-  window.ANTINSURE_RUNTIME = runtime;
+  window.ANTFUND_RUNTIME = runtime;
 
   (async function main() {
     var hasBackend = await detectBackend();
     if (hasBackend) {
       runtime.mode = 'http';
       resolveReady('http');
-      console.log('[AntInsure] 检测到本地后端，走 FastAPI 模式');
+      console.log('[AntFund] 检测到本地后端，走 FastAPI 模式');
       return;
     }
     try {
@@ -243,9 +243,9 @@
       };
       resolveReady('bridge');
       hideOverlay();
-      console.log('[AntInsure] 纯静态模式：Python 引擎已在浏览器内启动');
+      console.log('[AntFund] 纯静态模式：Python 引擎已在浏览器内启动');
     } catch (e) {
-      console.error('[AntInsure] 引擎启动失败', e);
+      console.error('[AntFund] 引擎启动失败', e);
       fail('无法在浏览器内启动 Python 引擎。', e && e.message);
       // 让已挂起的 init() 明确失败，而不是永远转圈
       resolveReady('bridge');

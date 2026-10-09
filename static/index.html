@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AntInsure AI · 蚂蚁保平台 AI 销售系统</title>
-<link rel="stylesheet" href="./static/style.css" />
+<title>AntFund AI · 基金主动销售与持有服务工作台</title>
+<link rel="stylesheet" href="./static/style.css?v=antfund-1" />
 </head>
 <body>
 
@@ -16,22 +16,22 @@
       <path d="M12.2 18.4h7.6" stroke="#a371f7" stroke-width="2" stroke-linecap="round"/>
     </svg>
     <div>
-      <h1>AntInsure AI</h1>
-      <p class="sub">蚂蚁保平台 AI 销售系统 · 五层 Multi-Agent 可运行 Demo</p>
+      <h1>AntFund AI</h1>
+      <p class="sub">基金主动销售与持有服务工作台 · 目标确认 / 适当性 / 比较 / 申购演示 / 持有陪伴</p>
     </div>
   </div>
 
   <div class="positioning">
     <span class="pill">AI 销售系统（主动引导转化）</span>
-    <span class="pill ghost">不是 AI 客服（被动应答）</span>
-    <span class="pill ghost">LLM 只理解 + 只调工具，不算数、不决策</span>
+    <span class="pill ghost">支持授权触达与停止提醒</span>
+    <span class="pill ghost">交易不自动执行 · 费用由工具计算</span>
   </div>
 
   <div class="controls">
     <div class="ctrl-group">
       <label>Prompt 版本</label>
       <div class="seg" id="promptSeg">
-        <button data-v="v3.0" class="active">v3.0 生产版</button>
+        <button data-v="v3.0" class="active">v3.0 基金场景版</button>
         <button data-v="v1.0">v1.0 对照版</button>
         <button data-v="auto">灰度 A/B</button>
       </div>
@@ -43,13 +43,14 @@
   </div>
 </header>
 
+<div class="fund-context"><strong>从需求到持有，风险匹配先行。</strong><span>目标与期限 → 有效测评 → 证据解释 → 基金比较 → 自主确认 → 持有服务</span><small>虚构基金与画像 · 无真实模型、账户或交易连接 · 所有指标仅为当前浏览器的演示记录</small></div>
 <main class="layout">
 
   <!-- ================= 左栏 ================= -->
   <aside class="col-left">
     <section class="card">
       <h2 class="card-title">① 用户层 · 画像选择</h2>
-      <p class="card-hint">Planner 会按画像实时分型（了解型 / 比价型 / 犹豫型），旅程与情绪曲线决定介入优先级</p>
+      <p class="card-hint">Planner 会按画像实时分型（初次了解 / 审慎比较 / 长期持有），旅程与情绪曲线决定介入优先级</p>
       <div class="user-list" id="userList"></div>
       <div class="profile-detail" id="profileDetail"></div>
     </section>
@@ -65,15 +66,15 @@
       <p class="card-hint">把一句"模型可能生成的违规话术"直接送进 4 道闸，验证拦截能力</p>
       <div class="adversarial" id="adversarialList"></div>
       <div class="adversarial-input">
-        <textarea id="advText" rows="2" placeholder="自定义违规话术，例如：这款年金险稳赚不赔，比银行存款划算。"></textarea>
+        <textarea aria-label="合规压测话术" id="advText" rows="2" placeholder="自定义违规话术，例如：这只基金稳赚不赔，不用做风险测评。"></textarea>
         <button class="btn primary" id="advBtn">送入 4 道闸</button>
       </div>
     </section>
 
     <section class="card">
       <h2 class="card-title">④ 数据层 · Prompt 回归集</h2>
-      <p class="card-hint">改 Prompt 自动跑回归，任一不过即拦截上线</p>
-      <button class="btn" id="regressionBtn">运行 500+ Badcase 回归</button>
+      <p class="card-hint">执行真实规则断言；包含措辞变体，不代表100个独立场景</p>
+      <button class="btn" id="regressionBtn">运行 100 条规则回归</button>
       <div id="regressionResult" class="regression"></div>
     </section>
   </aside>
@@ -95,7 +96,7 @@
         </div>
       </div>
       <div class="chat-input">
-        <textarea id="msgInput" rows="1" placeholder="也可以直接模拟用户说话，例如：这个健康告知我不知道怎么填"></textarea>
+        <textarea aria-label="模拟投资者咨询" id="msgInput" rows="1" placeholder="也可以直接模拟用户说话，例如：这两类基金的风险、费用和赎回有什么区别"></textarea>
         <button class="btn primary" id="sendBtn">发送</button>
       </div>
     </div>
@@ -105,7 +106,7 @@
   <aside class="col-right">
     <div class="tabs" id="tabs">
       <button data-tab="pipeline" class="active">五层流水线</button>
-      <button data-tab="trace">Trace / 重放</button>
+      <button data-tab="trace">Trace / 快照</button>
       <button data-tab="metrics">指标看板</button>
       <button data-tab="reflect">复盘层</button>
     </div>
@@ -129,7 +130,7 @@
           <div class="trace-id" id="traceIdLabel">—</div>
           <div class="trace-sub" id="traceSub">每一次决策全量落库，Trace ID 贯穿召回→重排→推荐→Prompt→LLM→4 道闸</div>
         </div>
-        <button class="btn small" id="replayBtn" disabled>一键重放 (L3)</button>
+        <button class="btn small" id="replayBtn" disabled>历史快照 (L3)</button>
       </div>
       <div class="trace-steps" id="traceSteps"><span class="muted">暂无 Trace</span></div>
       <div class="trace-list-head">历史 Trace</div>
@@ -152,10 +153,10 @@
       </div>
     </div>
   </aside>
-</main>
+</main><footer class="footer">所有基金、风险等级与费率均为虚构演示。基金有风险，投资需谨慎。未连接真实账户、申购或赎回服务。</footer>
 
-<!-- bridge 必须先于 app.js：它要同步挂载 window.ANTINSURE_RUNTIME -->
-<script src="./static/bridge.js"></script>
-<script src="./static/app.js"></script>
+<!-- bridge 必须先于 app.js：它要同步挂载 window.ANTFUND_RUNTIME -->
+<script src="./static/bridge.js?v=antfund-1"></script>
+<script src="./static/app.js?v=antfund-1"></script>
 </body>
 </html>

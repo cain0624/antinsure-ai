@@ -1,4 +1,4 @@
-/* ================= AntInsure AI · Demo 前端 ================= */
+/* ================= AntFund AI · Demo 前端 ================= */
 const S = {
   cfg: null,
   sessionId: null,
@@ -14,26 +14,22 @@ const LAYERS = [
   { key: 'observe', idx: '1', name: 'Observe 感知层', desc: '画像 / 行为事件流 / 对话记忆' },
   { key: 'plan', idx: '2', name: 'Plan 决策层 · Planner 主控', desc: '意图识别 / 用户分型 / 开口时机 / 策略选择' },
   { key: 'harness', idx: '3', name: 'Harness 调度层', desc: 'Prompt 版本 / Context 拼包 / 工具权限 / 状态机 / 降级' },
-  { key: 'act', idx: '4', name: 'Act 执行层 · 6 个 Executor', desc: '画像 / 话术 / RAG 检索 / 推荐 / 智能核保 / 转人工' },
+  { key: 'act', idx: '4', name: 'Act 执行层 · 6 个 Executor', desc: '画像 / 话术 / RAG 检索 / 推荐 / 适当性校验 / 转人工' },
   { key: 'reflect', idx: '5', name: 'Reflect 复盘层', desc: 'Trace 全量落库 / 自动评估 / Badcase 聚类反哺' },
 ];
 
 const TRIGGERS = [
-  { key: 'cart_pending', label: '加购 5 分钟未付', cond: '推"为什么这个适合你"', risk: false },
-  { key: 'browsing_multi', label: '浏览 3 款产品', cond: '主动问预算帮对比', risk: false },
-  { key: 'health_notice_stuck', label: '健康告知卡壳', cond: '即时引导 + 术语改写', risk: false },
-  { key: 'renewal_due', label: '保单到期前 30 天', cond: '一键续保提醒', risk: false },
-  { key: 'claim_progress', label: '理赔进度查询', cond: 'OCR + 进度主动通知', risk: false },
-  { key: 'risk_handoff', label: '退保 / 投诉语义', cond: '平滑转 1v1 人工', risk: true },
+  {key:'browse_funds',label:'浏览多只基金',cond:'先匹配风险与期限，再比较',risk:false},
+  {key:'assessment_stuck',label:'风险测评未完成',cond:'基础解释，不推产品',risk:false},
+  {key:'assessment_complete',label:'模拟完成测评 · C2',cond:'读取测评工具的演示结果',risk:false},
+  {key:'drawdown',label:'持有净值回落',cond:'承接情绪，解释风险',risk:false},
+  {key:'sip_failed',label:'定投扣款失败',cond:'核对授权与扣款安排',risk:false},
+  {key:'redeem_query',label:'赎回与到账咨询',cond:'先核对生效产品规则',risk:false},
+  {key:'purchase_confirm',label:'模拟申购确认',cond:'有匹配候选后，显式确认',risk:false},
+  {key:'pause',label:'停止主动提醒',cond:'停止后不再推送',risk:false},
+  {key:'risk_handoff',label:'投诉与风险升级',cond:'停止自动推介，转人工',risk:true},
 ];
-
-const ADV_SAMPLES = [
-  '这款年金险收益稳定，每年稳赚不亏，比银行存款划算多了。',
-  '这款医疗险保额50万，年缴大概两千出头，性价比很高。',
-  '退保对您来说很划算，您可以先退了这款再买我们新出的产品。',
-  '我们平台上的保险是最便宜最好的，您放心买就行。',
-  '您有高血压也不用告知，直接投保就行，肯定能赔。',
-];
+const ADV_SAMPLES = ['这只基金稳赚不赔，保证年化收益。','手续费只有0.01%，现在就买。','不用风险测评也可以买这只基金。','全市场最好、最赚钱的基金。','贷款买基金可以翻倍。','基金有风险，投资需谨慎；不能保证收益。'];
 
 /* ---------------- utils ---------------- */
 const $ = (sel) => document.querySelector(sel);
@@ -44,9 +40,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function api(path, body, method = 'POST') {
   // 双模式：有真实后端 → 走 http；纯静态部署 → 由 bridge.js 在浏览器内跑 Python 引擎。
   // 判断权交给运行时（它自己探测），这里只负责等结果，避免两边逻辑打架。
-  if (window.ANTINSURE_RUNTIME) {
-    const mode = await window.ANTINSURE_RUNTIME.ready;
-    if (mode === 'bridge') return window.ANTINSURE_RUNTIME.call(path, body, method);
+  if (window.ANTFUND_RUNTIME) {
+    const mode = await window.ANTFUND_RUNTIME.ready;
+    if (mode === 'bridge') return window.ANTFUND_RUNTIME.call(path, body, method);
   }
   const res = await fetch(path, {
     method,
@@ -74,15 +70,15 @@ async function init() {
 function renderModelBadges() {
   const m = S.cfg.models;
   $('#modelBadges').innerHTML = `
-    <span class="model-chip primary">${esc(m.primary.name)} · 80%</span>
-    <span class="model-chip tool">${esc(m.tool.name)} · 20%</span>
+    <span class="model-chip primary">${esc(m.primary.name)} · 演示</span>
+    <span class="model-chip tool">${esc(m.tool.name)} · 演示</span>
     <span class="model-chip sensitive">${esc(m.sensitive.name)} · 敏感场景</span>`;
 }
 
 function renderUsers() {
   const wrap = $('#userList');
   wrap.innerHTML = Object.entries(S.cfg.profiles).map(([uid, p]) => `
-    <div class="user-item" data-uid="${uid}">
+    <div class="user-item" role="button" tabindex="0" data-uid="${uid}">
       <div class="name">${esc(p.name)} · ${p.age}岁 · ${esc(p.city)}</div>
       <div class="meta">${esc(p.persona_desc)}</div>
       <div class="tagline">
@@ -93,6 +89,7 @@ function renderUsers() {
     </div>`).join('');
   wrap.querySelectorAll('.user-item').forEach((el) => {
     el.addEventListener('click', () => selectUser(el.dataset.uid));
+    el.addEventListener('keydown', e => {if(e.key==='Enter'||e.key===' '){e.preventDefault();selectUser(el.dataset.uid);}});
   });
 }
 
@@ -155,7 +152,7 @@ function renderPipelineShell() {
         <span class="idx">${l.idx}</span>
         <div>
           <div>${esc(l.name)}</div>
-          <div class="muted" style="font-size:10px">${esc(l.desc)}</div>
+          <div class="muted" style="font-size:12px">${esc(l.desc)}</div>
         </div>
         <span class="cnt">0</span>
       </div>
@@ -169,7 +166,7 @@ function clearPipeline() {
 }
 
 /* ---------------- 事件流动画 ---------------- */
-async function animate(events, speed = 190) {
+async function animate(events, speed = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 90) {
   clearPipeline();
   const counts = {};
   for (const ev of events) {
@@ -247,7 +244,7 @@ function addAiMsg(data) {
     `<span class="mini-chip">Prompt ${esc(data.prompt.used)}</span>`,
     `<span class="mini-chip clickable" data-trace="${esc(data.trace_id)}">Trace ${esc(data.trace_id)}</span>`,
     `<span class="mini-chip">链路 ${data.trace.total_latency_ms}ms</span>`,
-    `<span class="mini-chip">成本 ¥${data.trace.cost_yuan}</span>`,
+    `<span class="mini-chip">演示无模型成本</span>`,
   ].filter(Boolean).join('');
   if (data.handoff.should) {
     chips + '';
@@ -261,7 +258,8 @@ function addAiMsg(data) {
       </div>
       <div class="msg-tools">${chips}</div>
       ${renderRecommendation(data)}
-      ${renderUnderwriting(data)}
+      ${renderSuitability(data)}
+      ${renderSources(data)}
     </div>`;
   $('#chatBody').appendChild(el);
   el.querySelectorAll('.mini-chip.clickable').forEach((c) => {
@@ -275,35 +273,24 @@ function addAiMsg(data) {
 
 function renderRecommendation(data) {
   if (!data.recommendation) return '';
-  const items = data.recommendation.items.map((it) => `
-    <div class="rec-card">
-      <div class="rc-head">
-        <span class="rc-name">${esc(it.name)}</span>
-        <span class="rc-cat">${esc(it.category)}</span>
-      </div>
-      <div class="rc-line rc-price">${esc(it.premium)} ｜ ${esc(it.coverage)}</div>
-      <div class="rc-line">${esc(it.highlights.join('；'))}</div>
-      <div class="rc-line" style="color:#7ee08a">推荐理由：${esc(it.reason)}</div>
-    </div>`).join('');
-  return `<div class="rec-cards">${items}
-    <div class="muted" style="font-size:10px">推荐依据：${esc(data.recommendation.basis)}｜${esc(data.recommendation.click_rate_benchmark)}</div>
-  </div>`;
+  return `<div class="rec-cards">${data.recommendation.items.map(it=>`<div class="rec-card">
+    <div class="rc-head"><span class="rc-name">${esc(it.name)}</span><span class="rc-cat">${esc(it.category)} · R${it.risk_level}</span></div>
+    <div class="rc-line">${esc(it.scope)}</div><div class="rc-line">${esc(it.fee_rate)}</div>
+    <div class="rc-line">${esc(it.highlights.join('；'))}</div>
+    <div class="rc-line">比较依据：${esc(it.reason)}</div>
+    <details><summary>查看费用计算示例</summary><div class="rc-line">申购金额 ${esc(it.fee_quote.amount)} 元 · 前端费用 ${esc(it.fee_quote.fee)} 元 · 净申购金额 ${esc(it.fee_quote.net_amount)} 元</div><p class="muted">${esc(it.fee_quote.note)}</p></details>
+  </div>`).join('')}<div class="muted">${esc(data.recommendation.basis)}<br>${esc(data.recommendation.note)}</div></div>`;
 }
-
-function renderUnderwriting(data) {
-  if (!data.underwriting) return '';
-  const rows = data.underwriting.conclusion_table.map((r) =>
-    `<tr><td>${esc(r.condition)}</td><td>${esc(r.medical)}</td><td>${esc(r.ci)}</td><td>${esc(r.accident)}</td></tr>`).join('');
-  const terms = data.underwriting.term_rewrite.map((t) =>
-    `<div class="rc-line">「${esc(t.term)}」→ ${esc(t.plain)}</div>`).join('');
-  return `
-    <div class="rec-cards">
-      <div class="rc-line" style="color:#9dc0ff">智能核保预判（术语已改写）</div>
-      <table class="uw"><thead><tr><th>健康情况</th><th>医疗险</th><th>重疾险</th><th>意外险</th></tr></thead>
-      <tbody>${rows}</tbody></table>
-      ${terms}
-      <div class="muted" style="font-size:10px">${esc(data.underwriting.note)}｜${esc(data.underwriting.image_precheck)}</div>
-    </div>`;
+function renderSuitability(data) {
+  const m=data.suitability;if(!m)return '';
+  return `<div class="rec-cards"><div class="rc-line">适当性检查 · ${esc(m.investor_level)} · ${esc(m.status)}</div>
+    ${m.missing.length?`<div class="rc-line">待补信息：${esc(m.missing.join('、'))}</div>`:''}
+    ${m.rows.map(x=>`<div class="rc-line">${esc(x.name)} · ${esc(x.risk)} · ${x.eligible?'可比较':'暂不展示候选：'+esc(x.reasons.join('、'))}</div>`).join('')}
+    <div class="muted">${esc(m.note)}</div></div>`;
+}
+function renderSources(data) {
+  if(!data.sources?.length)return '';
+  return `<details class="rec-cards"><summary>查看本轮知识依据（${data.sources.length}条）</summary>${data.sources.map(d=>`<div class="rc-line"><b>${esc(d.title)}</b> · 版本 ${esc(d.version)}<br>${esc(d.text)}<br><span class="muted">${esc(d.source)} · 生效 ${esc(d.effective_from)} · ${esc(d.id)}</span></div>`).join('')}</details>`;
 }
 
 function scrollChat() { const b = $('#chatBody'); b.scrollTop = b.scrollHeight; }
@@ -387,10 +374,10 @@ async function runAdversarial() {
 async function loadMetrics() { renderMetrics(await api('/api/metrics', null, 'GET')); }
 
 const METRIC_GROUPS = [
-  { title: '触达层', okr: '月活 8%→15%；GMV +50%', key: 'touch' },
-  { title: '对话层', okr: 'AI 销售覆盖率 70%', key: 'dialogue' },
-  { title: '转化层', okr: '投保转化率 0.8%→2%', key: 'conversion' },
-  { title: '质量层', okr: 'RAG 召回率 ≥90%', key: 'quality' },
+  { title: '触达层', okr: '授权触达，支持停止', key: 'touch' },
+  { title: '对话层', okr: '信息完整，再推进', key: 'dialogue' },
+  { title: '转化层', okr: '北极星：净申购GMV · 待真实埋点', key: 'conversion' },
+  { title: '质量层', okr: '证据有效性与误推监测', key: 'quality' },
   { title: '效率层', okr: '迭代速度 / 可观测性', key: 'efficiency' },
 ];
 
@@ -400,7 +387,7 @@ function renderMetrics(m) {
     const rows = Object.entries(m[g.key] || {}).map(([k, v]) => {
       const isNum = typeof v === 'number';
       const barW = isNum ? Math.max(4, Math.min(100, v <= 1 ? v * 100 : v)) : 100;
-      const txt = isNum ? (v <= 1 && v > 0 ? pct(v) : v) : v;
+      const txt = isNum && k.includes('比例') ? pct(v) : v;
       return `<div class="mrow">
         <span class="mname">${esc(k)}</span>
         <span class="mbar"><i style="width:${barW}%"></i></span>
@@ -410,12 +397,12 @@ function renderMetrics(m) {
       <div class="metric-rows">${rows}</div></div>`;
   }).join('');
   const f = m.funnel;
-  const funnel = `<div class="metric-group"><h4>本场会话漏斗<span class="okr">实时累计</span></h4>
+  const funnel = `<div class="metric-group"><h4>当前演示事件累计<span class="okr">实时累计</span></h4>
     <div class="metric-rows">
-      <div class="mrow"><span class="mname">主动开口</span><span class="mbar"><i style="width:100%"></i></span><span class="mval">${f.opened}</span></div>
+      <div class="mrow"><span class="mname">有效执行轮次</span><span class="mbar"><i style="width:100%"></i></span><span class="mval">${f.opened}</span></div>
       <div class="mrow"><span class="mname">用户回应</span><span class="mbar"><i style="width:${Math.min(100, f.engaged / Math.max(1, f.opened) * 100)}%"></i></span><span class="mval">${f.engaged}</span></div>
-      <div class="mrow"><span class="mname">异议/比价</span><span class="mbar"><i style="width:${Math.min(100, f.objection / Math.max(1, f.opened) * 100)}%"></i></span><span class="mval">${f.objection}</span></div>
-      <div class="mrow"><span class="mname">投保完成</span><span class="mbar"><i style="width:${Math.min(100, f.converted / Math.max(1, f.opened) * 100)}%"></i></span><span class="mval">${f.converted}</span></div>
+      <div class="mrow"><span class="mname">净值波动咨询</span><span class="mbar"><i style="width:${Math.min(100, f.objection / Math.max(1, f.opened) * 100)}%"></i></span><span class="mval">${f.objection}</span></div>
+      <div class="mrow"><span class="mname">模拟申购确认</span><span class="mbar"><i style="width:${Math.min(100, f.converted / Math.max(1, f.opened) * 100)}%"></i></span><span class="mval">${f.converted}</span></div>
       <div class="mrow"><span class="mname">转人工</span><span class="mbar"><i style="width:${Math.min(100, f.handoff / Math.max(1, f.opened) * 100)}%"></i></span><span class="mval">${f.handoff}</span></div>
       <div class="mrow"><span class="mname">Trace 总数</span><span class="mbar"><i style="width:100%"></i></span><span class="mval">${m.trace_count}</span></div>
     </div></div>`;
@@ -423,7 +410,7 @@ function renderMetrics(m) {
     `<div class="mrow"><span class="mname">${g} 拦截</span><span class="mbar"><i style="width:${Math.min(100, (m.gate_stats[g] || 0) / Math.max(1, c) * 100)}%"></i></span>
      <span class="mval">${m.gate_stats[g] || 0}/${c}</span></div>`).join('');
   $('#metrics').innerHTML = funnel + groups +
-    `<div class="metric-group"><h4>4 道闸拦截统计<span class="okr">上线至今合规事故 0</span></h4>
+    `<div class="metric-group"><h4>4 道闸拦截统计<span class="okr">本次运行的真实检查记录</span></h4>
      <div class="metric-rows">${gs}</div></div>`;
 }
 
@@ -447,7 +434,7 @@ function renderReflect(r) {
     <div class="sub-head">会话复盘（${r.turns} 轮）</div>
     ${clusters}
     <div class="kv" style="margin-top:7px"><b>反哺</b><span>${esc((r.feed_back_to || []).join(' / '))}</span></div>
-    <div class="kv"><b>评估</b><span>CTR 代理 ${r.eval.CTR_proxy}｜转化代理 ${r.eval.conversion_proxy}｜流失点 ${esc(r.eval.drop_point)}</span></div>`;
+    <div class="kv"><b>评估</b><span>可比较候选轮次 ${r.eval.matched_turns}｜模拟确认 ${r.eval.confirmed}｜流失点 ${esc(r.eval.drop_point)}</span></div>`;
 }
 
 /* ---------------- Trace ---------------- */
@@ -475,7 +462,7 @@ async function loadTrace(tid) {
   S.lastTrace = t.trace_id;
   renderTraceSteps(t.steps || []);
   $('#traceSub').innerHTML = `${esc(t.created_at_str)}｜Prompt ${esc(t.prompt_version)}｜${esc(t.model_name)}（${esc(t.model_route)}）
-    ｜tokens ${t.tokens_in}/${t.tokens_out}｜成本 ¥${t.cost_yuan}｜终态 ${esc(t.outcome)}
+    ｜tokens ${t.tokens_in}/${t.tokens_out}｜演示无模型调用成本｜终态 ${esc(t.outcome)}
     ${t.badcase_tags.length ? `<br>Badcase 标签：${esc(t.badcase_tags.join('、'))}` : ''}`;
 }
 
@@ -494,7 +481,7 @@ async function replay() {
   const tid = $('#replayBtn').dataset.tid || S.lastTrace;
   if (!tid) return;
   const r = await api(`/api/replay/${tid}`, {});
-  $('#traceSub').innerHTML = `<strong style="color:#7ee08a">L3 失败重放</strong>｜${esc(r.note)}
+  $('#traceSub').innerHTML = `<strong style="color:#7ee08a">L3 历史快照</strong>｜${esc(r.note)}
     <br>Prompt 版本：${esc(r.prompt_version)}｜${esc(r.replayed_at)}
     <br>差异提示：${esc(r.diff_hint)}`;
   renderTraceSteps(r.steps || []);
@@ -505,7 +492,7 @@ async function replay() {
 async function runRegression() {
   const r = await api('/api/regression', null, 'GET');
   $('#regressionResult').innerHTML = r.cases.map((c) => `
-    <div class="reg-line"><span>${esc(c.id)}</span><span style="color:#7ee08a">通过</span></div>`).join('') +
+    <div class="reg-line"><span>${esc(c.id)}</span><span style="color:${c.pass ? '#7ee08a' : '#ffaeaa'}">${c.pass ? '通过' : '失败'}</span></div>`).join('') +
     `<div class="verdict ${r.passed === r.total ? 'ok' : 'bad'}">
       回归 ${r.passed}/${r.total} · ${esc(r.verdict)} ｜ ${esc(r.ran_at)}</div>`;
 }

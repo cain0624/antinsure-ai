@@ -62,7 +62,7 @@ def _config() -> dict:
 
 def _session(body: dict) -> dict:
     user_id = body.get("user_id", "u_1001")
-    prompt_version = body.get("prompt_version", "auto")
+    prompt_version = body.get("prompt_version", "v3.0")
     sid = "ss_" + uuid.uuid4().hex[:10]
     session = _orchestrator.get_session(sid, user_id, prompt_version)
     profile = _harness.profiles.get(user_id, {})

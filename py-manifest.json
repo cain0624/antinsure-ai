@@ -1,7 +1,7 @@
 [
   "py/api_facade.py",
   "py/core/__init__.py",
-  "py/core/actuary.py",
+  "py/core/finance.py",
   "py/core/agents.py",
   "py/core/compliance.py",
   "py/core/harness.py",

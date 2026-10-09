@@ -1,72 +1,97 @@
 {
   "profiles": {
     "u_1001": {
-      "name": "林小雅",
-      "age": 28,
-      "gender": "女",
-      "persona": "新手妈妈",
-      "persona_desc": "第一次买保险、怕买错，孩子刚满1岁",
-      "city": "杭州",
-      "member_years": 4,
-      "history": ["搜索过 少儿医疗", "收藏过 好医保·长期医疗", "浏览过 小飞侠·少儿门诊住院医疗"],
-      "behaviors_24h": ["浏览3款产品", "加购未支付(好医保·长期医疗)", "详情页停留 96 秒"],
-      "risk_flags": [],
-      "concerns": ["怕买错", "不知道给孩子买什么", "怕理赔麻烦"],
-      "budget_signal": "低预算敏感，关注月缴",
-      "typing_hint": "犹豫型",
-      "ltv_tier": "成长型"
+      "name": "林女士",
+      "age": 32,
+      "city": "上海",
+      "persona": "审慎比较",
+      "persona_desc": "希望管理备用资金，关注费用与流动性",
+      "typing_hint": "审慎比较",
+      "ltv_tier": "模拟画像 · 非真实客户",
+      "risk_level": 2,
+      "assessment_valid": true,
+      "horizon_months": 18,
+      "goal": "备用资金之外的稳健配置",
+      "own_funds": true,
+      "contact_consent": true,
+      "concerns": [
+        "本金波动",
+        "赎回安排"
+      ],
+      "budget_signal": "自有资金 10,000 元（演示）",
+      "behaviors_24h": [
+        "浏览基金风险及费用说明"
+      ],
+      "history": [
+        "无真实账户或交易数据"
+      ]
     },
     "u_1002": {
-      "name": "陈默",
-      "age": 34,
-      "gender": "男",
-      "persona": "30+ 理性白领",
-      "persona_desc": "跨产品比价，看条款看费率，决策理性",
-      "city": "深圳",
-      "member_years": 7,
-      "history": ["对比过 5 款重疾险", "搜索过 重疾险 保额怎么选", "看过 年金险 收益测算"],
-      "behaviors_24h": ["浏览3款以上产品", "对比页停留 4 分 12 秒", "点击过费率表"],
-      "risk_flags": [],
-      "concerns": ["性价比", "条款细节", "免责条款"],
-      "budget_signal": "中高预算，关注长期总成本",
-      "typing_hint": "比价型",
-      "ltv_tier": "高价值"
+      "name": "周先生",
+      "age": 39,
+      "city": "上海",
+      "persona": "长期持有",
+      "persona_desc": "已有指数基金经验，面对净值回落需要解释",
+      "typing_hint": "长期持有",
+      "ltv_tier": "模拟画像 · 非真实客户",
+      "risk_level": 4,
+      "assessment_valid": true,
+      "horizon_months": 48,
+      "goal": "长期资产积累",
+      "own_funds": true,
+      "contact_consent": true,
+      "concerns": [
+        "净值回落",
+        "长期持有",
+        "定投纪律"
+      ],
+      "budget_signal": "自有资金 10,000 元（演示）",
+      "behaviors_24h": [
+        "浏览基金风险及费用说明"
+      ],
+      "history": [
+        "无真实账户或交易数据"
+      ]
     },
     "u_1003": {
-      "name": "王建国",
-      "age": 52,
-      "gender": "男",
-      "persona": "50岁准退休人群",
-      "persona_desc": "健康告知卡壳，有高血压病史，怕被拒保",
-      "city": "成都",
-      "member_years": 9,
-      "history": ["投保流程走到健康告知页", "搜索过 高血压 能买什么保险", "咨询过 退保损失"],
-      "behaviors_24h": ["健康告知页停留 6 分钟未提交", "反复切换 3 个页面", "点击过 放弃投保"],
-      "risk_flags": ["退保咨询历史"],
-      "concerns": ["会被拒保吗", "健康告知怎么填", "条款看不懂"],
-      "budget_signal": "可接受年缴 5000 以内",
-      "typing_hint": "了解型",
-      "ltv_tier": "存量待唤醒"
+      "name": "陈女士",
+      "age": 27,
+      "city": "上海",
+      "persona": "初次了解",
+      "persona_desc": "尚未完成测评，应先解释风险与基本规则",
+      "typing_hint": "初次了解",
+      "ltv_tier": "模拟画像 · 非真实客户",
+      "risk_level": 0,
+      "assessment_valid": false,
+      "horizon_months": 12,
+      "goal": "了解基金基础与资金安排",
+      "own_funds": true,
+      "contact_consent": true,
+      "concerns": [
+        "风险测评",
+        "申购费用"
+      ],
+      "budget_signal": "自有资金 10,000 元（演示）",
+      "behaviors_24h": [
+        "浏览基金风险及费用说明"
+      ],
+      "history": [
+        "无真实账户或交易数据"
+      ]
     }
   },
   "personas": {
-    "新手妈妈": {
-      "strategy": "陪伴型",
-      "tone": "温和、去术语、给确定性",
-      "opening_style": "先用共情句接住焦虑，再给一条最简单的建议路径",
-      "key_points": ["先保大人还是孩子", "月缴无压力", "理赔流程一句话说清"]
+    "审慎比较": {
+      "strategy": "先期限与流动性，再风险与费用",
+      "tone": "少承诺，多依据，支持停止提醒"
     },
-    "30+ 理性白领": {
-      "strategy": "对比型",
-      "tone": "结构化、给数据、留决策权",
-      "opening_style": "直接给 3 款差异表 + 推荐理由，不绕弯",
-      "key_points": ["费率与保障杠杆", "免责条款差异", "长期总成本"]
+    "长期持有": {
+      "strategy": "承接情绪，解释波动与持有规则",
+      "tone": "少承诺，多依据，支持停止提醒"
     },
-    "50岁准退休人群": {
-      "strategy": "科普型",
-      "tone": "慢、通俗、把术语翻译成大白话",
-      "opening_style": "先消除被拒保的恐惧，再带着做健康告知",
-      "key_points": ["既往症核保结论", "健康告知怎么填", "续保稳定性"]
+    "初次了解": {
+      "strategy": "基础教育优先，测评有效后才比较",
+      "tone": "少承诺，多依据，支持停止提醒"
     }
   }
 }
